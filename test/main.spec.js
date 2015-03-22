@@ -3,7 +3,16 @@ if (typeof hangmanEngine === 'undefined') {
 }
 
 describe('hangman-engine', function() {
-  var module, game;
+  var module,
+    game,
+    STATUSES = ['PENDING', 'STARTED', 'QUIT', 'WON', 'LOST'],
+    listener = {
+      start: function() {},
+      guess: function() {},
+      hit: function() {},
+      miss: function() {},
+      end: function() {}
+    };
 
   beforeEach(function() {
     module = hangmanEngine;
@@ -25,26 +34,32 @@ describe('hangman-engine', function() {
     it('should work', function() {
       module.configure();
       game = module.newGame('test');
-      expect(game.config.MAX_ATTEMPT).toBe(10);
+      expect(game.config.maxAttempt).toBe(10);
 
       module.configure({
-        MAX_ATTEMPT: 5,
-        NON_EXISTING: 'test'
+        maxAttempt: 5,
+        nonExisting: 'test'
       });
       game = module.newGame('test');
 
-      expect(game.config.MAX_ATTEMPT).toBe(5);
-      expect(game.config.NON_EXISTING).not.toBeDefined();
+      expect(game.config.maxAttempt).toBe(5);
+      expect(game.config.nonExisting).not.toBeDefined();
 
       module.reset();
       game = module.newGame('test');
-      expect(game.config.MAX_ATTEMPT).toBe(10);
+      expect(game.config.maxAttempt).toBe(10);
     });
   });
 
   describe('newGame()', function() {
     beforeEach(function() {
       game = module.newGame('test');
+
+      spyOn(listener, 'start');
+      spyOn(listener, 'guess');
+      spyOn(listener, 'hit');
+      spyOn(listener, 'miss');
+      spyOn(listener, 'end');
     });
 
     it('should return a game object', function() {
@@ -53,15 +68,108 @@ describe('hangman-engine', function() {
       expect(game.end).toBeDefined();
       expect(game.hint).toBeDefined();
 
-      expect(game.word).toBeDefined();
+      expect(game.status).toBe(STATUSES[0]);
+      expect(game.characters).toBeDefined();
       expect(game.guesses).toBeDefined();
-      expect(game.matches).toBeDefined();
+      expect(game.hits).toBeDefined();
       expect(game.misses).toBeDefined();
       expect(game.config).toBeDefined();
     });
 
     it('should get default config', function() {
-      expect(game.config.MAX_ATTEMPT).toBe(10);
+      expect(game.config.maxAttempt).toBe(10);
+    });
+
+    it('should accept multi words', function() {
+      expect(game.characters).toEqual(['t', 'e', 's']);
+
+      game = module.newGame('test phrase ');
+      expect(game.characters).toEqual(['t', 'e', 's', 'p', 'h', 'r', 'a']);
+
+      game = module.newGame(null);
+      expect(game.characters).toEqual([]);
+    });
+
+    it('start() should work', function() {
+      game.on('start', listener.start);
+      game.start();
+      expect(game.status).toBe(STATUSES[1]);
+      expect(listener.start).toHaveBeenCalled();
+
+      // started games cannot be started again:
+      game.start();
+      expect(listener.start.calls.count()).toEqual(1);
+
+      // restart:
+      game.guess('t');
+      game.start(true);
+      expect(game.status).toBe(STATUSES[1]);
+      expect(game.guesses).toEqual([]);
+      expect(listener.start.calls.count()).toEqual(2);
+    });
+
+    it('guess() should work', function() {
+      game.on('guess', listener.guess);
+      game.on('hit', listener.hit);
+      game.on('miss', listener.miss);
+      expect(game.guesses.length).toBe(0);
+
+      game.start();
+      game.guess('t');
+      expect(game.guesses.length).toBe(1);
+      expect(game.hits.length).toBe(1);
+      expect(game.misses.length).toBe(0);
+      expect(listener.guess).toHaveBeenCalled();
+      expect(listener.hit).toHaveBeenCalled();
+      expect(listener.miss).not.toHaveBeenCalled();
+
+      game.guess('x');
+      expect(game.guesses.length).toBe(2);
+      expect(game.hits.length).toBe(1);
+      expect(game.misses.length).toBe(1);
+      expect(listener.guess.calls.count()).toEqual(2);
+      expect(listener.hit.calls.count()).toEqual(1);
+      expect(listener.miss).toHaveBeenCalled();
+
+      game.guess(null);
+      expect(game.guesses.length).toBe(2);
+      expect(game.hits.length).toBe(1);
+      expect(game.misses.length).toBe(1);
+      expect(listener.guess.calls.count()).toEqual(2);
+      expect(listener.hit.calls.count()).toEqual(1);
+      expect(listener.miss.calls.count()).toEqual(1);
+
+      game.guess(' ');
+      expect(game.guesses.length).toBe(2);
+      expect(game.hits.length).toBe(1);
+      expect(game.misses.length).toBe(1);
+
+      // takes first character:
+      game.guess('ze');
+      expect(game.guesses.length).toBe(3);
+      expect(game.hits.length).toBe(1);
+      expect(game.misses.length).toBe(2);
+
+      game.guess('sx');
+      expect(game.guesses.length).toBe(4);
+      expect(game.hits.length).toBe(2);
+      expect(game.misses.length).toBe(2);
+    });
+
+    it('end() should work', function() {
+      game.on('end', listener.end);
+      game.end();
+      expect(game.status).toBe(STATUSES[2]);
+      expect(listener.end).toHaveBeenCalled();
+
+      // ended games cannot be ended again:
+      game.end();
+      expect(listener.end.calls.count()).toEqual(1);
+
+      game.start(true);
+      game.end(STATUSES[3]);
+      expect(game.status).toBe(STATUSES[3]);
+      expect(listener.end.calls.count()).toEqual(2);
     });
   });
 });

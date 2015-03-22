@@ -5,27 +5,113 @@
     return JSON.parse(JSON.stringify(obj));
   }
 
-  var DEFAULT_SETTINGS = {
-    MAX_ATTEMPT: 10
+  var STATUSES = [
+    'PENDING',
+    'STARTED',
+    'QUIT',
+    'WON',
+    'LOST'
+  ];
+
+  var DEFAULT_CONFIG = {
+    maxAttempt: 10
   };
 
-  var HangmanGame = function(word, config) {
-    this.word = word || '';
+  var HangmanGame = function(phrase, config) {
+    var uniqueCharacters = [];
+
+    if (phrase && typeof phrase === 'string') {
+      phrase.trim().split('').forEach(function(character) {
+        if (character &&
+            character !== ' ' &&
+            uniqueCharacters.indexOf(character) === -1) {
+          uniqueCharacters.push(character);
+        }
+      });
+    }
+
+    this.status = STATUSES[0];
+    this.characters = uniqueCharacters;
     this.guesses = [];
-    this.matches = [];
+    this.hits = [];
     this.misses = [];
-    this.config = config || {};
+    this.config = config;
+    this.listeners = {
+      start: null,
+      guess: null,
+      hit: null,
+      miss: null,
+      end: null
+    };
   };
 
   HangmanGame.prototype = {
-    on: function() {
-      // TODO
+    on: function(listener, callback) {
+      if (this.listeners.hasOwnProperty(listener) &&
+          typeof callback === 'function') {
+        this.listeners[listener] = callback;
+      }
+
+      return this;
     },
-    guess: function() {
-      // TODO
+    start: function(force) {
+      if (force || this.status === STATUSES[0]) {
+        this.status = STATUSES[1];
+
+        if (force) {
+          this.guesses = [];
+          this.hits = [];
+          this.misses = [];
+        }
+
+        if (this.listeners.start) {
+          this.listeners.start.call(this);
+        }
+      }
+
+      return this;
     },
-    end: function() {
-      // TODO
+    guess: function(character) {
+      if (this.status === STATUSES[1] && typeof character === 'string') {
+        character = character[0].trim();
+
+        if (character) {
+          if (this.characters.indexOf(character) > -1) {
+            this.hits.push(character);
+            if (this.listeners.hit) {
+              this.listeners.hit.call(this, character);
+            }
+
+          } else {
+            this.misses.push(character);
+            if (this.listeners.miss) {
+              this.listeners.miss.call(this, character);
+            }
+          }
+
+          this.guesses.push(character);
+          if (this.listeners.guess) {
+            this.listeners.guess.call(this, character);
+          }
+
+          if (this.guesses.length === this.config.maxAttempt) {
+            this.end(STATUSES[
+              this.hits.length === this.characters.length ? 3 : 4]);
+          }
+        }
+      }
+
+      return this;
+    },
+    end: function(status) {
+      if (STATUSES.indexOf(this.status) < 2) {
+        this.status = status || STATUSES[2];
+        if (this.listeners.end) {
+          this.listeners.end.call(this);
+        }
+      }
+
+      return this;
     },
     hint: function() {
       // TODO
@@ -33,7 +119,7 @@
   };
 
   var HangmanEngine = function() {
-    this.config = _copy(DEFAULT_SETTINGS);
+    this.config = _copy(DEFAULT_CONFIG);
   };
 
   HangmanEngine.prototype = {
@@ -49,10 +135,10 @@
       }
     },
     reset: function() {
-      this.config = _copy(DEFAULT_SETTINGS);
+      this.config = _copy(DEFAULT_CONFIG);
     },
-    newGame: function(word) {
-      return new HangmanGame(word, _copy(this.config));
+    newGame: function(phrase) {
+      return new HangmanGame(phrase, _copy(this.config));
     }
   };
 
