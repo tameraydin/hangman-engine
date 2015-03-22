@@ -1,0 +1,35 @@
+{
+  "name": "hangman-engine",
+  "version": "0.1.0",
+  "description": "Hangman game engine",
+  "main": "dist/hangman-engine.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tameraydin/hangman-engine.git"
+  },
+  "keywords": [
+    "game",
+    "hangman",
+    "engine"
+  ],
+  "ignore": [
+    "node_modules",
+    "coverage",
+    "test",
+    "src",
+    ".editorconfig",
+    ".gitignore",
+    ".npmignore",
+    ".travis.yml",
+    "gulpfile.js",
+    "package.json"
+  ],
+  "authors": [
+    {
+      "name": "Tamer Aydin",
+      "homepage": "http://tamerayd.in"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/tameraydin/hangman-engine"
+}
