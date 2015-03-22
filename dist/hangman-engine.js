@@ -44,8 +44,6 @@
     this.listeners = {
       start: null,
       guess: null,
-      hit: null,
-      miss: null,
       end: null
     };
   };
@@ -61,14 +59,13 @@
     },
     start: function(force) {
       if (force || this.status === STATUSES[0]) {
-        this.status = STATUSES[1];
-
         if (force) {
           this.guesses = [];
           this.hits = [];
           this.misses = [];
         }
 
+        this.status = STATUSES[1];
         if (this.listeners.start) {
           this.listeners.start.call(this);
         }
@@ -76,32 +73,45 @@
 
       return this;
     },
-    guess: function(character) {
+    guess: function(character, isHint) {
       if (this.status === STATUSES[1] && typeof character === 'string') {
-        character = character[0].trim();
+        var hit;
 
+        character = character[0].trim();
         if (character) {
           if (this.characters.indexOf(character) > -1) {
-            this.hits.push(character);
-            if (this.listeners.hit) {
-              this.listeners.hit.call(this, character);
-            }
+            hit = this.hits.push(character);
 
           } else {
             this.misses.push(character);
-            if (this.listeners.miss) {
-              this.listeners.miss.call(this, character);
-            }
           }
 
           this.guesses.push(character);
           if (this.listeners.guess) {
-            this.listeners.guess.call(this, character);
+            this.listeners.guess.call(this, character, !!hit, !!isHint);
           }
 
-          if (this.guesses.length === this.config.maxAttempt) {
-            this.end(STATUSES[
-              this.hits.length === this.characters.length ? 3 : 4]);
+          if (this.hits.length === this.characters.length) {
+            this.end(STATUSES[3]);
+
+          } else if (this.guesses.length === this.config.maxAttempt) {
+            this.end(STATUSES[4]);
+          }
+        }
+      }
+
+      return this;
+    },
+    hint: function() {
+      if (this.status === STATUSES[1]) {
+        var i;
+
+        for (i = 0; i < this.characters.length; i++) {
+          var character = this.characters[i];
+
+          if (this.hits.indexOf(character) === -1) {
+            this.guess(character, true);
+            break;
           }
         }
       }
@@ -117,9 +127,6 @@
       }
 
       return this;
-    },
-    hint: function() {
-      // TODO
     }
   };
 
