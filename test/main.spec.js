@@ -9,8 +9,6 @@ describe('hangman-engine', function() {
     listener = {
       start: function() {},
       guess: function() {},
-      hit: function() {},
-      miss: function() {},
       end: function() {}
     };
 
@@ -57,8 +55,6 @@ describe('hangman-engine', function() {
 
       spyOn(listener, 'start');
       spyOn(listener, 'guess');
-      spyOn(listener, 'hit');
-      spyOn(listener, 'miss');
       spyOn(listener, 'end');
     });
 
@@ -90,6 +86,17 @@ describe('hangman-engine', function() {
       expect(game.characters).toEqual([]);
     });
 
+    it('on() should work', function() {
+      game.on('start', 'invalid');
+      expect(game.listeners.start).toBe(null);
+
+      game.on('invalid', listener.start);
+      expect(game.listeners.invalid).toBe(undefined);
+
+      game.on('start', listener.start);
+      expect(game.listeners.start).toEqual(listener.start);
+    });
+
     it('start() should work', function() {
       game.on('start', listener.start);
       game.start();
@@ -102,42 +109,42 @@ describe('hangman-engine', function() {
 
       // restart:
       game.guess('t');
+      game.guess('x');
       game.start(true);
       expect(game.status).toBe(STATUSES[1]);
       expect(game.guesses).toEqual([]);
+      expect(game.misses).toEqual([]);
       expect(listener.start.calls.count()).toEqual(2);
     });
 
     it('guess() should work', function() {
       game.on('guess', listener.guess);
-      game.on('hit', listener.hit);
-      game.on('miss', listener.miss);
       expect(game.guesses.length).toBe(0);
+
+      // cannot guess before start:
+      game.guess('t');
+      expect(game.guesses.length).toBe(0);
+      expect(listener.guess).not.toHaveBeenCalled();
 
       game.start();
       game.guess('t');
       expect(game.guesses.length).toBe(1);
       expect(game.hits.length).toBe(1);
       expect(game.misses.length).toBe(0);
-      expect(listener.guess).toHaveBeenCalled();
-      expect(listener.hit).toHaveBeenCalled();
-      expect(listener.miss).not.toHaveBeenCalled();
+      expect(listener.guess).toHaveBeenCalledWith('t', true, false);
 
       game.guess('x');
       expect(game.guesses.length).toBe(2);
       expect(game.hits.length).toBe(1);
       expect(game.misses.length).toBe(1);
       expect(listener.guess.calls.count()).toEqual(2);
-      expect(listener.hit.calls.count()).toEqual(1);
-      expect(listener.miss).toHaveBeenCalled();
+      expect(listener.guess.calls.mostRecent().args).toEqual(['x', false, false]);
 
       game.guess(null);
       expect(game.guesses.length).toBe(2);
       expect(game.hits.length).toBe(1);
       expect(game.misses.length).toBe(1);
       expect(listener.guess.calls.count()).toEqual(2);
-      expect(listener.hit.calls.count()).toEqual(1);
-      expect(listener.miss.calls.count()).toEqual(1);
 
       game.guess(' ');
       expect(game.guesses.length).toBe(2);
@@ -156,10 +163,32 @@ describe('hangman-engine', function() {
       expect(game.misses.length).toBe(2);
     });
 
+    it('hint() should work', function() {
+      game.on('guess', listener.guess);
+      game.start();
+
+      game.hint();
+      expect(game.hits.length).toBe(1);
+      expect(listener.guess).toHaveBeenCalledWith('t', true, true);
+
+      game.hint();
+      expect(game.hits.length).toBe(2);
+      expect(listener.guess).toHaveBeenCalledWith('e', true, true);
+
+      // cannot guess if the game is ended:
+      game.end();
+      game.hint();
+      expect(listener.guess.calls.count()).toEqual(2);
+    });
+
     it('end() should work', function() {
-      game.on('end', listener.end);
+      // quit:
       game.end();
       expect(game.status).toBe(STATUSES[2]);
+
+      game.on('end', listener.end);
+      game.start(true);
+      game.end();
       expect(listener.end).toHaveBeenCalled();
 
       // ended games cannot be ended again:
@@ -170,6 +199,33 @@ describe('hangman-engine', function() {
       game.end(STATUSES[3]);
       expect(game.status).toBe(STATUSES[3]);
       expect(listener.end.calls.count()).toEqual(2);
+    });
+
+    it('can be won', function() {
+      var result = game
+        .start()
+        .guess('t')
+        .guess('e')
+        .guess('s');
+
+      expect(result.status).toBe(STATUSES[3]);
+    });
+
+    it('can be lost', function() {
+      var result = game
+        .start()
+        .guess('q')
+        .guess('w')
+        .guess('e')
+        .guess('r')
+        .guess('t')
+        .guess('y')
+        .guess('u')
+        .guess('i')
+        .guess('o')
+        .guess('p');
+
+      expect(result.status).toBe(STATUSES[4]);
     });
   });
 });
