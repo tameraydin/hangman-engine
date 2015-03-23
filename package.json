@@ -16,10 +16,12 @@
     "engine"
   ],
   "author": "Tamer Aydin (http://tamerayd.in)",
-  "contributors": [{
-    "name": "Tamer Aydin",
-    "url": "http://tamerayd.in"
-  }],
+  "contributors": [
+    {
+      "name": "Tamer Aydin",
+      "url": "http://tamerayd.in"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/tameraydin/hangman-engine/issues"
@@ -32,7 +34,7 @@
     "predef": []
   },
   "engines": {
-    "node" : ">=0.8 <=0.12"
+    "node": ">=0.8 <=0.12"
   },
   "dependencies": {},
   "devDependencies": {
