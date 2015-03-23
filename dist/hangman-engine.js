@@ -19,16 +19,23 @@
   ];
 
   var DEFAULT_CONFIG = {
-    maxAttempt: 10
+    maxAttempt: 10,
+    concealCharacter: '*'
   };
 
   var HangmanGame = function(phrase, config) {
     var uniqueCharacters = [];
+    var characterMap = {};
 
     if (phrase && typeof phrase === 'string') {
-      phrase.trim().split('').forEach(function(character) {
-        if (character &&
-            character !== ' ' &&
+      phrase.trim().split('').forEach(function(character, index) {
+        if (characterMap[character]) {
+          characterMap[character].push(index);
+        } else {
+          characterMap[character] = [index];
+        }
+
+        if (character !== ' ' &&
             uniqueCharacters.indexOf(character) === -1) {
           uniqueCharacters.push(character);
         }
@@ -36,6 +43,7 @@
     }
 
     this.status = STATUSES[0];
+    this.characterMap = characterMap;
     this.characters = uniqueCharacters;
     this.guesses = [];
     this.hits = [];
@@ -81,7 +89,6 @@
         if (character) {
           if (this.characters.indexOf(character) > -1) {
             hit = this.hits.push(character);
-
           } else {
             this.misses.push(character);
           }
@@ -127,6 +134,23 @@
       }
 
       return this;
+    },
+    getConcealedPhrase: function() {
+      var key,
+        concealCharacter = this.config.concealCharacter,
+        hits = this.hits,
+        characters = [];
+
+      function _addToCharactersList(index) {
+        characters[index] = (key !== ' ' && hits.indexOf(key) === -1) ?
+          concealCharacter : key;
+      }
+
+      for (key in this.characterMap) {
+        this.characterMap[key].forEach(_addToCharactersList);
+      }
+
+      return characters.join('');
     }
   };
 

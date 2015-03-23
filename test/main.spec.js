@@ -36,16 +36,19 @@ describe('hangman-engine', function() {
 
       module.configure({
         maxAttempt: 5,
+        concealCharacter: '_',
         nonExisting: 'test'
       });
       game = module.newGame('test');
 
       expect(game.config.maxAttempt).toBe(5);
+      expect(game.config.concealCharacter).toBe('_');
       expect(game.config.nonExisting).not.toBeDefined();
 
       module.reset();
       game = module.newGame('test');
       expect(game.config.maxAttempt).toBe(10);
+      expect(game.config.concealCharacter).toBe('*');
     });
   });
 
@@ -74,6 +77,7 @@ describe('hangman-engine', function() {
 
     it('should get default config', function() {
       expect(game.config.maxAttempt).toBe(10);
+      expect(game.config.concealCharacter).toBe('*');
     });
 
     it('should accept multi words', function() {
@@ -199,6 +203,37 @@ describe('hangman-engine', function() {
       game.end(STATUSES[3]);
       expect(game.status).toBe(STATUSES[3]);
       expect(listener.end.calls.count()).toEqual(2);
+    });
+
+    it('getConcealedPhrase() should work', function() {
+      var phrases = [];
+
+      function _addToList() {
+        phrases.push(this.getConcealedPhrase());
+      }
+
+      game = module.newGame(' test me');
+      game.on('start', _addToList);
+      game.on('guess', _addToList);
+      game.on('end', _addToList);
+
+      game.start();
+      expect(phrases[0]).toBe('**** **');
+
+      game.guess('e');
+      expect(phrases[1]).toBe('*e** *e');
+
+      game.guess('x');
+      expect(phrases[2]).toBe('*e** *e');
+
+      module.configure({
+        concealCharacter: '+'
+      });
+      var anotherGame = module.newGame('char');
+      anotherGame.on('start', _addToList);
+
+      anotherGame.start();
+      expect(phrases[3]).toBe('++++');
     });
 
     it('can be won', function() {
