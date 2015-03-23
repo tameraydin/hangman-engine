@@ -32,7 +32,7 @@ HangmanEngine has 3 main methods:
 - #### configure( *config* ):
   Pre-defines settings for the games that are going to be created.
   Defaults as following:
-  ```json
+  ```javascript
   {
       maxAttempt: 10,
       concealCharacter: '*'
