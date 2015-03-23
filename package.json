@@ -1,6 +1,6 @@
 {
   "name": "hangman-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Hangman game engine",
   "main": "dist/hangman-engine.js",
   "scripts": {
