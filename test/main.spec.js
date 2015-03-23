@@ -203,6 +203,12 @@ describe('hangman-engine', function() {
       game.end(STATUSES[3]);
       expect(game.status).toBe(STATUSES[3]);
       expect(listener.end.calls.count()).toEqual(2);
+
+      // cannot be ended with any other status than 'QUIT', 'WON', 'LOST'
+      game.start(true);
+      game.end(STATUSES[0]);
+      expect(game.status).toBe(STATUSES[1]);
+      expect(listener.end.calls.count()).toEqual(2);
     });
 
     it('getConcealedPhrase() should work', function() {

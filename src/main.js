@@ -122,6 +122,10 @@
     },
     end: function(status) {
       if (STATUSES.indexOf(this.status) < 2) {
+        if (status && STATUSES.indexOf(status) < 2) {
+          return this;
+        }
+
         this.status = status || STATUSES[2];
         if (this.listeners.end) {
           this.listeners.end.call(this);
