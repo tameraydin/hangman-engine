@@ -1,5 +1,8 @@
 language: node_js
 node_js: "0.10"
-before_install: npm install --global gulp
+before_install:
+  - npm install -g jasmine@latest
+  - npm install -g jasmine-node@latest
+  - npm install -g gulp
 install: npm install
 after_script: ./node_modules/.bin/gulp coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage
