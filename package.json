@@ -4,7 +4,7 @@
   "description": "Hangman game engine",
   "main": "dist/hangman-engine.js",
   "scripts": {
-    "test": "./node_modules/.bin/jasmine-node ./test"
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
