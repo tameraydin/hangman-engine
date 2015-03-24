@@ -141,6 +141,8 @@ describe('hangman-engine', function() {
       expect(game.guesses.length).toBe(2);
       expect(game.hits.length).toBe(1);
       expect(game.misses.length).toBe(1);
+      console.log(111, jasmine.version);
+      console.log(222, listener.guess.calls);
       expect(listener.guess.calls.count()).toEqual(2);
       expect(listener.guess.calls.mostRecent().args).toEqual(['x', false, false]);
 
